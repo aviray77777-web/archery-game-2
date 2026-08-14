@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+
+<title>Archery Game</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    touch-action:none;
+    user-select:none;
+}
+
+body{
+    overflow:hidden;
+    font-family:Arial,sans-serif;
+    background:#87ceeb;
+}
+
+#game{
+    width:100vw;
+    height:100vh;
+    position:relative;
+    overflow:hidden;
+}
+
+.sky{
+    position:absolute;
+    inset:0;
+    background:
+    radial-gradient(circle at 20% 20%,white 0 25px,transparent 26px),
+    radial-gradient(circle at 75% 15%,white 0 30px,transparent 31px),
+    linear-gradient(
+        #74c8f0 0%,
+        #c9f0ff 70%,
+        #77b852 70%,
+        #4c963b 100%
+    );
+}
+
+/* TOP UI */
+
+#ui{
+    position:absolute;
+    top:12px;
+    left:12px;
+    right:12px;
+    display:flex;
+    justify-content:space-between;
+    z-index:100;
+}
+
+.box{
+    background:rgba(0,0,0,.7);
+    color:white;
+    padding:9px 14px;
+    border-radius:10px;
+    font-size:16px;
+    font-weight:bold;
+}
+
+#levelText{
+    position:absolute;
+    top:62px;
+    left:12px;
+    background:rgba(0,0,0,.7);
+    color:white;
+    padding:7px 12px;
+    border-radius:10px;
+    font-weight:bold;
+    z-index:100;
+}
+
+#timer{
+    position:absolute;
+    top:62px;
+    right:12px;
+    background:rgba(0,0,0,.7);
+    color:white;
+    padding:7px 14px;
+    border-radius:20px;
+    font-size:18px;
+    font-weight:bold;
+    z-index:100;
+}
+
+/* TARGET */
+
+#target{
+    position:absolute;
+    width:180px;
+    height:180px;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+
+    background:
+    radial-gradient(
+        circle,
+        #222 0 14%,
+        white 14% 28%,
+        #e53935 28% 43%,
+        white 43% 58%,
+        #e53935 58% 75%,
+        white 75% 100%
+    );
+
+    border:7px solid #633d20;
+    box-shadow:0 8px 15px #555;
+    z-index:10;
+}
+
+#bull{
+    position:absolute;
+    width:28px;
+    height:28px;
+    background:#222;
+    border-radius:50%;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+}
+
+/* SCOPE */
+
+#scope{
+    display:none;
+    position:absolute;
+    width:115px;
+    height:115px;
+    border:3px solid rgba(0,0,0,.8);
+    border-radius:50%;
+    z-index:30;
+    pointer-events:none;
+    box-shadow:0 0 0 9999px rgba(0,0,0,.18);
+}
+
+#scope::before{
+    content:"";
+    position:absolute;
+    width:100%;
+    height:2px;
+    background:rgba(0,0,0,.7);
+    top:50%;
+}
+
+#scope::after{
+    content:"";
+    position:absolute;
+    width:2px;
+    height:100%;
+    background:rgba(0,0,0,.7);
+    left:50%;
+}
+
+/* FLYING ARROW */
+
+#flyingArrow{
+    position:absolute;
+    width:180px;
+    height:6px;
+    background:#222;
+    border-radius:5px;
+    display:none;
+    z-index:40;
+    transform-origin:left center;
+}
+
+#flyingArrow::after{
+    content:"";
+    position:absolute;
+    right:-2px;
+    top:-7px;
+    border-left:20px solid #333;
+    border-top:10px solid transparent;
+    border-bottom:10px solid transparent;
+}
+
+#flyingArrow::before{
+    content:"";
+    position:absolute;
+    left:3px;
+    top:-8px;
+    width:18px;
+    height:20px;
+    background:repeating-linear-gradient(
+        45deg,
+        #d22 0 4px,
+        transparent 4px 8px
+    );
+}
+
+/* IMPACT */
+
+#impact{
+    position:absolute;
+    width:30px;
+    height:30px;
+    border:4px solid white;
+    border-radius:50%;
+    display:none;
+    z-index:60;
+}
+
+.particle{
+    position:absolute;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#ffd21f;
+    animation:particleFly .55s ease-out forwards;
+    z-index:70;
+}
+
+@keyframes particleFly{
+    0%{
+        transform:translate(0,0) scale(1);
+        opacity:1;
+    }
+
+    100%{
+        transform:translate(var(--x),var(--y)) scale(.1);
+        opacity:0;
+    }
+}
+
+/* JOYSTICK */
+
+#joystick{
+    position:absolute;
+    left:22px;
+    bottom:22px;
+    width:125px;
+    height:125px;
+    border-radius:50%;
+    background:rgba(0,0,0,.35);
+    border:4px solid rgba(255,255,255,.7);
+    z-index:150;
+}
+
+#stick{
+    position:absolute;
+    width:55px;
+    height:55px;
+    left:31px;
+    top:31px;
+    border-radius:50%;
+    background:rgba(255,255,255,.9);
+    border:4px solid #333;
+}
+
+/* FIRE BUTTON */
+
+#fireButton{
+    position:absolute;
+    right:22px;
+    bottom:28px;
+    width:105px;
+    height:105px;
+    border-radius:50%;
+    border:5px solid white;
+
+    background:
+    radial-gradient(
+        circle,
+        #ffed68,
+        #ff7b00 60%,
+        #d21c00
+    );
+
+    color:white;
+    font-size:20px;
+    font-weight:bold;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    z-index:150;
+
+    box-shadow:0 6px 15px rgba(0,0,0,.5);
+}
+
+/* MESSAGE */
+
+#message{
+    position:absolute;
+    top:28%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:42px;
+    font-weight:bold;
+    text-shadow:2px 2px 5px black;
+    display:none;
+    z-index:100;
+}
+
+/* SCREENS */
+
+.screen{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.82);
+    z-index:300;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    text-align:center;
+    color:white;
+}
+
+.hidden{
+    display:none !important;
+}
+
+h1{
+    font-size:40px;
+    margin-bottom:12px;
+}
+
+h2{
+    font-size:28px;
+    margin-bottom:12px;
+}
+
+.screen p{
+    font-size:18px;
+    line-height:1.5;
+    margin-bottom:20px;
+}
+
+.gameButton{
+    border:none;
+    border-radius:12px;
+    padding:14px 28px;
+    margin:6px;
+    font-size:19px;
+    font-weight:bold;
+    background:#ffb300;
+    color:#222;
+    touch-action:manipulation;
+}
+
+.nextButton{
+    background:#31d35b;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<div class="sky"></div>
+
+<!-- UI -->
+
+<div id="ui">
+
+    <div class="box">
+        🎯 Score:
+        <span id="score">0</span>
+    </div>
+
+    <div class="box">
+        🏹 Arrows:
+        <span id="arrows">3</span>
+    </div>
+
+</div>
+
+<div id="levelText">
+    Level 1
+</div>
+
+<div id="timer">
+    ⏱️ 20
+</div>
+
+
+<!-- TARGET -->
+
+<div id="target">
+    <div id="bull"></div>
+</div>
+
+
+<!-- AIM -->
+
+<div id="scope"></div>
+
+
+<!-- ARROW -->
+
+<div id="flyingArrow"></div>
+
+
+<!-- EFFECT -->
+
+<div id="impact"></div>
+
+<div id="message"></div>
+
+
+<!-- JOYSTICK -->
+
+<div id="joystick">
+    <div id="stick"></div>
+</div>
+
+
+<!-- FIRE -->
+
+<div id="fireButton">
+    🔥 FIRE
+</div>
+
+
+<!-- START SCREEN -->
+
+<div id="startScreen" class="screen">
+
+    <h1>🏹 ARCHERY</h1>
+
+    <h2 id="startLevel">
+        Level 1 - Basic
+    </h2>
+
+    <p id="startInfo">
+        Score 15 points<br>
+        3 arrows • 20 seconds
+    </p>
+
+    <button
+        id="startButton"
+        class="gameButton">
+        START
+    </button>
+
+</div>
+
+
+<!-- RESULT -->
+
+<div id="resultScreen"
+     class="screen hidden">
+
+    <h1 id="resultTitle">
+        🎯 LEVEL COMPLETE!
+    </h1>
+
+    <p id="resultInfo"></p>
+
+    <div>
+
+        <button
+            id="restartButton"
+            class="gameButton">
+            🔄 RESTART
+        </button>
+
+        <button
+            id="nextButton"
+            class="gameButton nextButton">
+            ▶ NEXT LEVEL
+        </button>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* =========================
+   LEVELS
+========================= */
+
+const levels = [
+
+    {
+        name:"Basic",
+        arrows:3,
+        target:15,
+        time:20,
+        moving:false
+    },
+
+    {
+        name:"Level 2",
+        arrows:3,
+        target:20,
+        time:20,
+        moving:false
+    },
+
+    {
+        name:"Level 3",
+        arrows:3,
+        target:25,
+        time:20,
+        moving:false
+    },
+
+    {
+        name:"Level 4",
+        arrows:5,
+        target:50,
+        time:28,
+        moving:false
+    },
+
+    {
+        name:"Level 5",
+        arrows:5,
+        target:50,
+        time:28,
+        moving:true
+    }
+
+];
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const target =
+document.getElementById("target");
+
+const scope =
+document.getElementById("scope");
+
+const flyingArrow =
+document.getElementById("flyingArrow");
+
+const impact =
+document.getElementById("impact");
+
+const joystick =
+document.getElementById("joystick");
+
+const stick =
+document.getElementById("stick");
+
+const fireButton =
+document.getElementById("fireButton");
+
+const scoreText =
+document.getElementById("score");
+
+const arrowsText =
+document.getElementById("arrows");
+
+const timerText =
+document.getElementById("timer");
+
+const levelText =
+document.getElementById("levelText");
+
+const message =
+document.getElementById("message");
+
+const startScreen =
+document.getElementById("startScreen");
+
+const startButton =
+document.getElementById("startButton");
+
+const resultScreen =
+document.getElementById("resultScreen");
+
+const resultTitle =
+document.getElementById("resultTitle");
+
+const resultInfo =
+document.getElementById("resultInfo");
+
+const restartButton =
+document.getElementById("restartButton");
+
+const nextButton =
+document.getElementById("nextButton");
+
+const startLevel =
+document.getElementById("startLevel");
+
+const startInfo =
+document.getElementById("startInfo");
+
+
+/* =========================
+   VARIABLES
+========================= */
+
+let currentLevel = 0;
+
+let score = 0;
+
+let arrowsLeft = 0;
+
+let timeLeft = 0;
+
+let timer = null;
+
+let shooting = false;
+
+let gameStarted = false;
+
+let aimX = 0;
+
+let aimY = 0;
+
+let movingJoystick = false;
+
+let joyX = 0;
+
+let joyY = 0;
+
+let targetMoving = false;
+
+let targetMoveTimer = null;
+
+
+/* =========================
+   START
+========================= */
+
+startButton.addEventListener(
+    "pointerdown",
+    function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        startGame();
+
+    }
+);
+
+
+/* =========================
+   RESTART
+========================= */
+
+restartButton.addEventListener(
+    "pointerdown",
+    function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        restartLevel();
+
+    }
+);
+
+
+/* =========================
+   NEXT
+========================= */
+
+nextButton.addEventListener(
+    "pointerdown",
+    function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        nextLevel();
+
+    }
+);
+
+
+/* =========================
+   LOAD LEVEL
+========================= */
+
+function loadLevel(){
+
+    const level =
+    levels[currentLevel];
+
+    score = 0;
+
+    arrowsLeft =
+    level.arrows;
+
+    timeLeft =
+    level.time;
+
+    scoreText.textContent =
+    score;
+
+    arrowsText.textContent =
+    arrowsLeft;
+
+    timerText.textContent =
+    "⏱️ " + timeLeft;
+
+    levelText.textContent =
+    "Level " +
+    (currentLevel + 1);
+
+    startLevel.textContent =
+    "Level " +
+    (currentLevel + 1) +
+    " - " +
+    level.name;
+
+    startInfo.innerHTML =
+    "Score " +
+    level.target +
+    " points<br>" +
+    level.arrows +
+    " arrows • " +
+    level.time +
+    " seconds";
+
+    clearInterval(timer);
+    clearInterval(targetMoveTimer);
+
+    gameStarted = false;
+    shooting = false;
+
+    targetMoving =
+    level.moving;
+
+    target.style.left =
+    "50%";
+
+    target.style.top =
+    "50%";
+
+    flyingArrow.style.display =
+    "none";
+
+    resetAimOutside();
+
+    scope.style.display =
+    "none";
+
+    startScreen.classList.remove(
+        "hidden"
+    );
+
+    resultScreen.classList.add(
+        "hidden"
+    );
+
+}
+
+
+/* =========================
+   START GAME
+========================= */
+
+function startGame(){
+
+    startScreen.classList.add(
+        "hidden"
+    );
+
+    resultScreen.classList.add(
+        "hidden"
+    );
+
+    gameStarted = true;
+
+    shooting = false;
+
+    /*
+       Aim starts OUTSIDE the board.
+    */
+    resetAimOutside();
+
+    scope.style.display =
+    "block";
+
+    startTimer();
+
+    if(targetMoving){
+
+        startTargetMovement();
+
+    }
+
+}
+
+
+/* =========================
+   RESET AIM OUTSIDE
+========================= */
+
+function resetAimOutside(){
+
+    /*
+       Left-bottom side,
+       completely away from board.
+    */
+
+    aimX = 65;
+
+    aimY =
+    window.innerHeight - 145;
+
+    updateScope();
+
+}
+
+
+/* =========================
+   SCOPE POSITION
+========================= */
+
+function updateScope(){
+
+    scope.style.left =
+    (aimX - 57) + "px";
+
+    scope.style.top =
+    (aimY - 57) + "px";
+
+}
+
+
+/* =========================
+   TIMER
+========================= */
+
+function startTimer(){
+
+    clearInterval(timer);
+
+    timer =
+    setInterval(function(){
+
+        if(!gameStarted)
+            return;
+
+        timeLeft--;
+
+        timerText.textContent =
+        "⏱️ " + timeLeft;
+
+        if(timeLeft <= 0){
+
+            clearInterval(timer);
+
+            loseLevel(
+                "⏰ TIME UP!"
+            );
+
+        }
+
+    },1000);
+
+}
+
+
+/* =========================
+   JOYSTICK
+========================= */
+
+joystick.addEventListener(
+    "pointerdown",
+    function(e){
+
+        if(
+            !gameStarted ||
+            shooting
+        )
+            return;
+
+        movingJoystick = true;
+
+        joystick.setPointerCapture(
+            e.pointerId
+        );
+
+        moveJoystick(e);
+
+    }
+);
+
+
+joystick.addEventListener(
+    "pointermove",
+    function(e){
+
+        if(
+            !movingJoystick ||
+            shooting
+        )
+            return;
+
+        moveJoystick(e);
+
+    }
+);
+
+
+joystick.addEventListener(
+    "pointerup",
+    function(){
+
+        movingJoystick = false;
+
+        joyX = 0;
+        joyY = 0;
+
+        stick.style.left =
+        "31px";
+
+        stick.style.top =
+        "31px";
+
+    }
+);
+
+
+joystick.addEventListener(
+    "pointercancel",
+    function(){
+
+        movingJoystick = false;
+
+        joyX = 0;
+        joyY = 0;
+
+        stick.style.left =
+        "31px";
+
+        stick.style.top =
+        "31px";
+
+    }
+);
+
+
+function moveJoystick(e){
+
+    const r =
+    joystick.getBoundingClientRect();
+
+    const centerX =
+    r.left + r.width / 2;
+
+    const centerY =
+    r.top + r.height / 2;
+
+    let dx =
+    e.clientX - centerX;
+
+    let dy =
+    e.clientY - centerY;
+
+    const max = 35;
+
+    const distance =
+    Math.sqrt(
+        dx * dx +
+        dy * dy
+    );
+
+    if(distance > max){
+
+        dx =
+        dx / distance * max;
+
+        dy =
+        dy / distance * max;
+
+    }
+
+    stick.style.left =
+    (31 + dx) + "px";
+
+    stick.style.top =
+    (31 + dy) + "px";
+
+    joyX =
+    dx / max;
+
+    joyY =
+    dy / max;
+
+}
+
+
+/* =========================
+   AIM MOVEMENT
+========================= */
+
+setInterval(function(){
+
+    if(
+        movingJoystick &&
+        !shooting &&
+        gameStarted
+    ){
+
+        aimX +=
+        joyX * 4;
+
+        aimY +=
+        joyY * 4;
+
+        aimX =
+        Math.max(
+            55,
+            Math.min(
+                window.innerWidth - 55,
+                aimX
+            )
+        );
+
+        aimY =
+        Math.max(
+            80,
+            Math.min(
+                window.innerHeight - 75,
+                aimY
+            )
+        );
+
+        updateScope();
+
+    }
+
+},16);
+
+
+/* =========================
+   FIRE
+========================= */
+
+fireButton.addEventListener(
+    "pointerdown",
+    function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if(
+            !gameStarted ||
+            shooting ||
+            arrowsLeft <= 0
+        )
+            return;
+
+        scope.style.display =
+        "none";
+
+        shootArrow();
+
+    }
+);
+
+
+/* =========================
+   SHOOT
+========================= */
+
+function shootArrow(){
+
+    shooting = true;
+
+    arrowsLeft--;
+
+    arrowsText.textContent =
+    arrowsLeft;
+
+    const startX = -190;
+
+    const startY =
+    window.innerHeight * .72;
+
+    const endX = aimX;
+
+    const endY = aimY;
+
+    const dx =
+    endX - startX;
+
+    const dy =
+    endY - startY;
+
+    const startTime =
+    performance.now();
+
+    const duration = 650;
+
+    flyingArrow.style.display =
+    "block";
+
+    flyingArrow.style.left =
+    startX + "px";
+
+    flyingArrow.style.top =
+    startY + "px";
+
+
+    function fly(time){
+
+        const progress =
+        Math.min(
+            (time - startTime) /
+            duration,
+            1
+        );
+
+        let x =
+        startX +
+        dx * progress;
+
+        let y =
+        startY +
+        dy * progress;
+
+        y -=
+        Math.sin(
+            progress * Math.PI
+        ) * 35;
+
+        flyingArrow.style.left =
+        x + "px";
+
+        flyingArrow.style.top =
+        y + "px";
+
+
+        const next =
+        Math.min(
+            progress + .02,
+            1
+        );
+
+        let nx =
+        startX +
+        dx * next;
+
+        let ny =
+        startY +
+        dy * next;
+
+        ny -=
+        Math.sin(
+            next * Math.PI
+        ) * 35;
+
+        const angle =
+        Math.atan2(
+            ny - y,
+            nx - x
+        ) *
+        180 /
+        Math.PI;
+
+        flyingArrow.style.transform =
+        "rotate(" +
+        angle +
+        "deg)";
+
+
+        if(progress < 1){
+
+            requestAnimationFrame(
+                fly
+            );
+
+        }
+        else{
+
+            arrowHit();
+
+        }
+
+    }
+
+    requestAnimationFrame(fly);
+
+}
+
+
+/* =========================
+   HIT
+========================= */
+
+function arrowHit(){
+
+    /*
+       Arrow disappears.
+    */
+
+    flyingArrow.style.display =
+    "none";
+
+
+    const r =
+    target.getBoundingClientRect();
+
+    const centerX =
+    r.left +
+    r.width / 2;
+
+    const centerY =
+    r.top +
+    r.height / 2;
+
+
+    const distance =
+    Math.sqrt(
+
+        Math.pow(
+            aimX - centerX,
+            2
+        )
+
+        +
+
+        Math.pow(
+            aimY - centerY,
+            2
+        )
+
+    );
+
+
+    let points = 0;
+
+
+    /*
+       Maximum = 10
+    */
+
+    if(distance < 18){
+
+        points = 10;
+
+    }
+    else if(distance < 38){
+
+        points = 8;
+
+    }
+    else if(distance < 60){
+
+        points = 5;
+
+    }
+    else if(distance < 82){
+
+        points = 2;
+
+    }
+
+
+    score += points;
+
+    scoreText.textContent =
+    score;
+
+
+    message.textContent =
+    points > 0
+    ? "+" + points
+    : "MISS!";
+
+
+    message.style.display =
+    "block";
+
+
+    /*
+       Only impact effect.
+       Arrow does NOT stay on board.
+    */
+
+    createImpact(
+        aimX,
+        aimY
+    );
+
+
+    setTimeout(function(){
+
+        message.style.display =
+        "none";
+
+        shooting = false;
+
+
+        const level =
+        levels[currentLevel];
+
+
+        /*
+           LEVEL COMPLETE
+        */
+
+        if(score >= level.target){
+
+            winLevel();
+
+            return;
+
+        }
+
+
+        /*
+           NO ARROWS LEFT
+        */
+
+        if(arrowsLeft <= 0){
+
+            loseLevel(
+                "🏹 ARROWS FINISHED!"
+            );
+
+            return;
+
+        }
+
+
+        /*
+           IMPORTANT:
+           AIM GOES OUTSIDE THE BOARD
+           AFTER EVERY FIRE.
+        */
+
+        resetAimOutside();
+
+        scope.style.display =
+        "block";
+
+
+    },700);
+
+}
+
+
+/* =========================
+   IMPACT EFFECT
+========================= */
+
+function createImpact(x,y){
+
+    impact.style.left =
+    x + "px";
+
+    impact.style.top =
+    y + "px";
+
+    impact.style.display =
+    "block";
+
+
+    impact.animate(
+
+        [
+            {
+                transform:
+                "translate(-50%,-50%) scale(.2)",
+                opacity:1
+            },
+
+            {
+                transform:
+                "translate(-50%,-50%) scale(3)",
+                opacity:0
+            }
+        ],
+
+        {
+            duration:500
+        }
+
+    );
+
+
+    for(
+        let i=0;
+        i<14;
+        i++
+    ){
+
+        const p =
+        document.createElement(
+            "div"
+        );
+
+        p.className =
+        "particle";
+
+        p.style.left =
+        x + "px";
+
+        p.style.top =
+        y + "px";
+
+
+        const angle =
+        Math.random() *
+        Math.PI * 2;
+
+        const distance =
+        25 +
+        Math.random() * 50;
+
+
+        p.style.setProperty(
+            "--x",
+            Math.cos(angle) *
+            distance + "px"
+      
